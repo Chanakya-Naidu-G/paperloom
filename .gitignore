@@ -1,0 +1,49 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+
+# Backend generated data
+backend/data/uploads/*
+backend/data/chunks/*
+backend/data/parsed/*
+backend/data/embeddings/*
+backend/vector_db/
+
+# Keep empty directory placeholders
+!backend/data/uploads/.gitkeep
+!backend/data/chunks/.gitkeep
+!backend/data/parsed/.gitkeep
+!backend/data/embeddings/.gitkeep
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/backend/data/*.db
+backend/data/
