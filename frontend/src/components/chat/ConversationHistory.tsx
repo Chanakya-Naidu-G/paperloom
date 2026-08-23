@@ -2,20 +2,18 @@
 
 import { useChatStore } from "../../store/useChatStore";
 import { ConversationMessage } from "./ConversationMessage";
-import { ChatMessage } from "../../types/chat";
 
 export function ConversationHistory() {
-  const messages = useChatStore((state) => {
-    const activeSession = state.sessions.find(
-      (session) => session.id === state.activeSessionId
-    );
+  const messages = useChatStore(
+    (state) =>
+      state.sessions.find(
+        (session) => session.id === state.activeSessionId
+      )?.messages
+  );
 
-    return activeSession?.messages ?? [];
-  });
-
-  if (messages.length === 0) {
+  if (!messages || messages.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center text-zinc-500">
+      <div className="flex h-full items-center justify-center text-xs text-faint">
         Upload a paper and ask your first question
       </div>
     );

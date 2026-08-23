@@ -1,47 +1,22 @@
-const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+import { AskRequest, AskResponse } from '@/types/chat';
 
-interface AskRequest {
-  query: string;
-  top_k?: number;
-  document_ids?: string[];
-}
-
-interface AskSource {
-  chunk_id: string;
-  document_id: string;
-  section: string;
-  page_start: number;
-  page_end: number;
-}
-
-interface AskResponse {
-  query: string;
-  answer: string;
-  sources: AskSource[];
-}
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export async function askQuestion(
-  query: string,
-  topK: number = 5,
-  documentIds?: string[],
+  request: AskRequest,
 ): Promise<AskResponse> {
-  const response = await fetch(`${API_BASE_URL}/ask`, {
+  const response = await fetch(`${API_URL}/ask`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      query,
-      top_k: topK,
-      document_ids: documentIds,
-    }),
+    body: JSON.stringify(request),
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Ask request failed (${response.status}): ${errorText}`,
-    );
+    const message = await response.text();
+    throw new Error(message || 'Failed to get answer.');
   }
 
   return response.json();

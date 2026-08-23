@@ -1,8 +1,10 @@
 'use client';
 
 import React, { ChangeEvent, useRef, useState } from 'react';
+import { FileText, Plus } from 'lucide-react';
 import { uploadDocument } from '@/services/documentService';
 import { useDocumentStore } from '@/store/useDocumentStore';
+import { formatFileSize } from '@/lib/utils';
 
 export default function DocumentExplorer() {
   const {
@@ -15,6 +17,10 @@ export default function DocumentExplorer() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function openFilePicker() {
+    fileInputRef.current?.click();
+  }
 
   async function handleFileSelect(
     event: ChangeEvent<HTMLInputElement>,
@@ -67,55 +73,94 @@ export default function DocumentExplorer() {
   }
 
   return (
-    <div className="flex flex-col h-full p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Documents</h2>
+    <aside className="flex w-[260px] shrink-0 flex-col border-r border-border bg-explorer">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
 
-        <button type="button" onClick={() => alert('UPLOAD CLICKED')} className="px-3 py-1.5 rounded-md bg-red-500 text-white">UPLOAD TEST</button>
+      {/* Section heading */}
+      <div className="flex items-center justify-between px-6 pb-4 pt-5">
+        <h2 className="text-base font-semibold text-foreground">
+          Documents
+        </h2>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,application/pdf"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+        <button
+          type="button"
+          onClick={openFilePicker}
+          disabled={isUploading}
+          aria-label="Upload document"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground disabled:opacity-50"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Upload button: W 228 · H 40 · #2563EB · r8 */}
+      <div className="px-4">
+        <button
+          type="button"
+          onClick={openFilePicker}
+          disabled={isUploading}
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[13px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+        >
+          <Plus className="h-4 w-4" />
+          {isUploading ? 'Uploading...' : 'Upload PDF'}
+        </button>
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md border border-red-500/50 bg-red-500/10 p-3 text-xs text-red-400">
+        <div className="mx-4 mt-3 rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-xs text-red-400">
           {error}
         </div>
       )}
 
-      {documents.length === 0 ? (
-        <div className="text-sm text-muted-foreground">
-          No documents uploaded yet
-        </div>
-      ) : (
-        <div className="space-y-2 flex-1 overflow-y-auto">
-          {documents.map((doc) => (
-            <button
-              key={doc.id}
-              onClick={() => setSelectedDocument(doc.id)}
-              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                selectedDocumentId === doc.id
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-muted'
-              }`}
-            >
-              <div className="truncate font-medium">
-                {doc.name}
-              </div>
+      {/* Document cards: W 228 · H 68 · #18181B · r8 · indicator 3×68 #2563EB */}
+      <div className="mt-4 flex-1 space-y-3 overflow-y-auto px-4 pb-4">
+        {documents.length === 0 ? (
+          <p className="px-2 text-xs text-faint">
+            No documents uploaded yet
+          </p>
+        ) : (
+          documents.map((doc) => {
+            const isSelected = doc.id === selectedDocumentId;
 
-              <div className="text-xs opacity-75">
-                {(doc.size / 1024 / 1024).toFixed(2)} MB
-                {doc.pages && ` • ${doc.pages} pages`}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+            return (
+              <button
+                key={doc.id}
+                type="button"
+                onClick={() => setSelectedDocument(doc.id)}
+                className={`relative flex h-[68px] w-full items-center gap-3 overflow-hidden rounded-lg border px-3 text-left transition-colors ${
+                  isSelected
+                    ? 'border-border bg-surface-2'
+                    : 'border-border bg-surface-2/40 hover:bg-surface-2/70'
+                }`}
+              >
+                {isSelected && (
+                  <span className="absolute left-0 top-0 h-full w-[3px] rounded-[2px] bg-primary" />
+                )}
+
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-medium text-foreground">
+                    {doc.name}
+                  </span>
+
+                  <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+                    {doc.pages ? `${doc.pages} pages` : 'PDF'}
+                    {' · '}
+                    {formatFileSize(doc.size)}
+                  </span>
+                </span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </aside>
   );
 }

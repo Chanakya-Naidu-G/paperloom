@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useChatStore } from '@/store/useChatStore';
-import { ConversationMessage } from '@/components/chat/ConversationMessage';
-import { QuestionComposer } from '@/components/chat/QuestionComposer';
+import { useDocumentStore } from '@/store/useDocumentStore';
+import { ConversationHeader } from '@/components/chat/ConversationHeader';
+import { ConversationHistory } from '@/components/chat/ConversationHistory';
+import QuestionComposer from '@/components/chat/QuestionComposer';
 
 export default function ConversationPanel() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -14,48 +16,37 @@ export default function ConversationPanel() {
     )
   );
 
-  const messages = activeSession?.messages ?? [];
+  const selectedDocument = useDocumentStore((state) =>
+    state.documents.find(
+      (doc) => doc.id === state.selectedDocumentId
+    )
+  );
 
-  React.useEffect(() => {
+  const messageCount = activeSession?.messages.length ?? 0;
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: 'smooth',
     });
-  }, [messages]);
+  }, [messageCount]);
+
+  const title =
+    activeSession?.title ?? selectedDocument?.name ?? 'No document selected';
 
   return (
-    <div className="flex flex-col h-full bg-background rounded-lg border-2 border-border">
-      <div className="border-b-2 border-border p-4">
-        <h2 className="text-lg font-semibold">
-          {activeSession?.title || 'PaperLoom'}
-        </h2>
+    <div className="flex h-full min-w-0 flex-1 flex-col bg-conversation">
+      {/* Conversation Header */}
+      <ConversationHeader title={title} messageCount={messageCount} />
 
-        <p className="text-sm text-muted-foreground">
-          {messages.length} messages
-        </p>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4">
-        {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            Upload a paper and ask your first question
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <ConversationMessage
-                key={message.id}
-                message={message}
-              />
-            ))}
-          </div>
-        )}
+      {/* Conversation */}
+      <div className="flex-1 overflow-y-auto px-6 py-6">
+        <ConversationHistory />
 
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t-2 border-border p-4">
-        <QuestionComposer />
-      </div>
+      {/* Question Composer */}
+      <QuestionComposer />
     </div>
   );
 }

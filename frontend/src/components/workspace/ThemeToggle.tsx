@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Moon, Sun } from 'lucide-react';
 
 export default function ThemeToggle() {
@@ -18,8 +18,8 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const shouldBeDark = savedTheme ? savedTheme === 'dark' : prefersDark;
+    // Default to the Figma dark theme on first visit.
+    const shouldBeDark = savedTheme ? savedTheme === 'dark' : true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsDark(shouldBeDark);
     applyTheme(shouldBeDark);
@@ -27,26 +27,35 @@ export default function ThemeToggle() {
 
   const toggleTheme = useCallback(() => {
     setIsDark((prev) => {
-      if (prev === null) return true;
+      if (prev === null) return false;
       const newIsDark = !prev;
       applyTheme(newIsDark);
       return newIsDark;
     });
   }, [applyTheme]);
 
-  if (isDark === null) return null;
+  if (isDark === null) {
+    return (
+      <button
+        type="button"
+        aria-label="Toggle theme"
+        className="flex h-9 w-9 items-center justify-center rounded-md"
+      />
+    );
+  }
 
   return (
     <button
+      type="button"
       onClick={toggleTheme}
-      className="p-3 rounded-lg border-2 border-border bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center"
+      className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       aria-label="Toggle theme"
     >
       {isDark ? (
-        <Sun className="w-5 h-5 text-accent" />
+        <Moon className="h-5 w-5" />
       ) : (
-        <Moon className="w-5 h-5 text-primary" />
+        <Sun className="h-5 w-5" />
       )}
     </button>
   );
