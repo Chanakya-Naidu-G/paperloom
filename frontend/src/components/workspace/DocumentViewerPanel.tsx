@@ -34,8 +34,11 @@ export default function DocumentViewerPanel() {
             className="max-w-full max-h-full object-contain"
           />
         ) : selectedDoc ? (
-          <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-            {selectedDoc.content}
+          <div className="text-center text-muted-foreground">
+            <p>{selectedDoc.name}</p>
+            <p className="text-xs mt-2">
+              PDF preview will appear here.
+            </p>
           </div>
         ) : (
           <div className="text-center text-muted-foreground">

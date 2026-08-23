@@ -74,10 +74,9 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   searchDocuments: (query: string) => {
     const state = get();
     const lowerQuery = query.toLowerCase();
-    return state.documents.filter(
-      (doc) =>
-        doc.name.toLowerCase().includes(lowerQuery) ||
-        doc.content.toLowerCase().includes(lowerQuery)
+
+    return state.documents.filter((doc) =>
+      doc.name.toLowerCase().includes(lowerQuery)
     );
   },
 

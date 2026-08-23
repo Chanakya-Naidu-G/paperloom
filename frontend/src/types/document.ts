@@ -2,10 +2,12 @@ export interface Document {
   id: string;
   name: string;
   type: 'pdf' | 'text' | 'markdown';
-  content: string;
   size: number;
   uploadedAt: Date;
   updatedAt: Date;
+  pages?: number;
+  characters?: number;
+  chunkCount?: number;
 }
 
 export interface DocumentMetadata {
@@ -14,4 +16,6 @@ export interface DocumentMetadata {
   type: string;
   size: number;
   uploadedAt: Date;
+  pages?: number;
+  chunkCount?: number;
 }
