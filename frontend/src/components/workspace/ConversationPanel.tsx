@@ -39,7 +39,7 @@ export default function ConversationPanel() {
       <ConversationHeader title={title} messageCount={messageCount} />
 
       {/* Conversation */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="min-w-0 flex-1 overflow-y-auto px-6 py-6 max-[1023px]:px-4 max-[767px]:px-3">
         <ConversationHistory />
 
         <div ref={messagesEndRef} />

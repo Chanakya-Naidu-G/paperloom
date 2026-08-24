@@ -73,7 +73,7 @@ export default function DocumentExplorer() {
   }
 
   return (
-    <aside className="flex w-[260px] shrink-0 flex-col border-r border-border bg-explorer">
+    <aside className="flex h-full w-full shrink-0 flex-col bg-explorer">
       <input
         ref={fileInputRef}
         type="file"
@@ -83,7 +83,7 @@ export default function DocumentExplorer() {
       />
 
       {/* Section heading */}
-      <div className="flex items-center justify-between px-6 pb-4 pt-5">
+      <div className="flex items-center justify-between px-6 pb-4 pt-5 max-[1279px]:px-4">
         <h2 className="text-base font-semibold text-foreground">
           Documents
         </h2>
@@ -105,7 +105,7 @@ export default function DocumentExplorer() {
           type="button"
           onClick={openFilePicker}
           disabled={isUploading}
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[13px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+          className="flex h-10 max-[1023px]:h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[13px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
         >
           <Plus className="h-4 w-4" />
           {isUploading ? 'Uploading...' : 'Upload PDF'}
@@ -133,7 +133,7 @@ export default function DocumentExplorer() {
                 key={doc.id}
                 type="button"
                 onClick={() => setSelectedDocument(doc.id)}
-                className={`relative flex h-[68px] w-full items-center gap-3 overflow-hidden rounded-lg border px-3 text-left transition-colors ${
+                className={`relative flex h-[68px] max-[1023px]:h-[64px] w-full items-center gap-3 overflow-hidden rounded-lg border px-3 text-left transition-colors ${
                   isSelected
                     ? 'border-border bg-surface-2'
                     : 'border-border bg-surface-2/40 hover:bg-surface-2/70'

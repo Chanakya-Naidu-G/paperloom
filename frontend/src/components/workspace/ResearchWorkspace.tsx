@@ -9,15 +9,24 @@ import ContextPanel from './ContextPanel';
 
 export default function ResearchWorkspace() {
   const [isContextOpen, setIsContextOpen] = useState(true);
+  const [isDocsDrawerOpen, setIsDocsDrawerOpen] = useState(false);
+  const [isContextDrawerOpen, setIsContextDrawerOpen] = useState(false);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <AppHeader />
+      <AppHeader
+        onOpenDocuments={() => setIsDocsDrawerOpen(true)}
+        onOpenContext={() => setIsContextDrawerOpen(true)}
+      />
 
       <div className="flex min-h-0 flex-1">
-
-        {/* Document Explorer */}
-        <aside className="w-[260px] shrink-0 max-[1279px]:w-[220px] max-[1023px]:w-[200px] max-[767px]:hidden">
+        {/* Document Explorer — divider is an overlay so the 1px border
+            never consumes layout space (spec: W 260 incl. border, cards 228) */}
+        <aside className="relative w-[260px] shrink-0 max-[1279px]:w-[220px] max-[1023px]:w-[200px] max-[767px]:hidden">
+          <span
+            aria-hidden
+            className="absolute inset-y-0 right-0 w-px bg-border"
+          />
           <DocumentExplorer />
         </aside>
 
@@ -46,8 +55,37 @@ export default function ResearchWorkspace() {
             </div>
           )}
         </aside>
-
       </div>
+
+      {/* Mobile documents drawer */}
+      {isDocsDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setIsDocsDrawerOpen(false)}
+          />
+
+          <div className="relative flex h-full w-[260px] max-w-[85vw] flex-col bg-explorer">
+            <DocumentExplorer />
+          </div>
+        </div>
+      )}
+
+      {/* Mobile context drawer */}
+      {isContextDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setIsContextDrawerOpen(false)}
+          />
+
+          <div className="relative flex h-full w-[380px] max-w-[85vw] flex-col overflow-hidden bg-viewer">
+            <ContextPanel
+              onClose={() => setIsContextDrawerOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

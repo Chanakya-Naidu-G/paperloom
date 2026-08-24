@@ -73,7 +73,7 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
   return (
     <aside className="flex w-[380px] shrink-0 flex-col overflow-y-auto border-l border-border bg-viewer">
       {/* Panel header */}
-      <div className="flex items-center justify-between border-b border-border px-6 py-4">
+      <div className="flex items-center justify-between border-b border-border px-6 py-4 max-[1023px]:px-4">
         <h2 className="text-base font-semibold text-foreground">
           Context
         </h2>
@@ -89,41 +89,41 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
       </div>
 
       {!selectedDocument ? (
-        <div className="flex flex-1 items-center justify-center px-6 text-center text-xs text-faint">
+        <div className="flex flex-1 items-center justify-center px-6 text-center text-xs text-faint max-[1023px]:px-4">
           Select a document to see its context.
         </div>
       ) : (
         <>
           {/* Paper Information */}
-          <section className="border-b border-border px-6 py-5">
+          <section className="border-b border-border px-6 py-5 max-[1023px]:px-4">
             <h3 className="text-[13px] font-medium text-foreground">
               Paper Information
             </h3>
 
             <dl className="mt-4 space-y-3">
               <div className="flex items-center justify-between gap-4">
-                <dt className="text-xs text-faint">File Name</dt>
-                <dd className="truncate text-[13px] text-foreground">
+                <dt className="shrink-0 text-xs text-faint">File Name</dt>
+                <dd className="min-w-0 truncate text-[13px] text-foreground">
                   {selectedDocument.name}
                 </dd>
               </div>
 
               <div className="flex items-center justify-between gap-4">
-                <dt className="text-xs text-faint">Pages</dt>
+                <dt className="shrink-0 text-xs text-faint">Pages</dt>
                 <dd className="text-[13px] text-foreground">
                   {selectedDocument.pages ?? '—'}
                 </dd>
               </div>
 
               <div className="flex items-center justify-between gap-4">
-                <dt className="text-xs text-faint">File Size</dt>
+                <dt className="shrink-0 text-xs text-faint">File Size</dt>
                 <dd className="text-[13px] text-foreground">
                   {formatFileSize(selectedDocument.size)}
                 </dd>
               </div>
 
               <div className="flex items-center justify-between gap-4">
-                <dt className="text-xs text-faint">Uploaded</dt>
+                <dt className="shrink-0 text-xs text-faint">Uploaded</dt>
                 <dd className="text-[13px] text-foreground">
                   {formatDate(selectedDocument.uploadedAt)}
                 </dd>
@@ -132,7 +132,7 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
           </section>
 
           {/* Quick Actions */}
-          <section className="border-b border-border px-6 py-5">
+          <section className="border-b border-border px-6 py-5 max-[1023px]:px-4">
             <h3 className="text-[13px] font-medium text-foreground">
               Quick Actions
             </h3>
@@ -165,7 +165,7 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
           </section>
 
           {/* Relevant Sections */}
-          <section className="px-6 py-5">
+          <section className="px-6 py-5 max-[1023px]:px-4">
             <h3 className="text-[13px] font-medium text-foreground">
               Relevant Sections
             </h3>
@@ -182,7 +182,7 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
                       key={section.id}
                       className="flex items-center justify-between gap-4 py-1.5"
                     >
-                      <span className="truncate text-[13px] text-foreground">
+                      <span className="min-w-0 truncate text-[13px] text-foreground">
                         {section.section}
                       </span>
 

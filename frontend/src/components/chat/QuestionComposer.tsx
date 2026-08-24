@@ -107,7 +107,7 @@ export default function QuestionComposer() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-t border-border p-4"
+      className="border-t border-border p-6 max-[1023px]:p-4 max-[767px]:p-3"
     >
       <div className="flex items-center gap-3 rounded-lg border border-border bg-surface-2 px-4 py-2">
         <input
@@ -120,7 +120,7 @@ export default function QuestionComposer() {
               ? 'Thinking...'
               : 'Ask anything about this paper...'
           }
-          className="h-8 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-faint disabled:opacity-50"
+          className="h-8 min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-faint disabled:opacity-50"
         />
 
         <button

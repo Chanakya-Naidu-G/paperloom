@@ -34,7 +34,7 @@ export function ConversationMessage({
               : 'border-border bg-surface-2 text-foreground'
           }`}
         >
-          <div className="whitespace-pre-wrap">
+          <div className="whitespace-pre-wrap break-words">
             {message.content}
           </div>
 
@@ -49,7 +49,7 @@ export function ConversationMessage({
                   {message.citations.map((citation) => (
                     <div
                       key={citation.id}
-                      className="text-[11px] text-faint"
+                      className="break-words text-[11px] text-faint"
                     >
                       {citation.source}
                       {citation.page &&
