@@ -27,9 +27,11 @@ class DocumentProcessingService:
         mime_type: str,
         file_size: int,
         file_hash: str,
+        user_id: str | None = None,
     ) -> tuple[Document, IngestionResult]:
 
         document = Document(
+            user_id=user_id,
             original_filename=original_filename,
             stored_filename=stored_file.filename,
             parsed_filename="",

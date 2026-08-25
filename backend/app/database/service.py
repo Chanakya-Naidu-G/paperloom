@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from app.core.storage import get_upload_path
 from app.database.entities import Document
 from app.database.entities import DocumentStatus
 from app.database.repository import DocumentRepository
@@ -24,33 +25,67 @@ class DocumentService:
         existing = self._repository.get_by_file_hash(
             document.file_hash,
             include_deleted=True,
+            user_id=document.user_id,
         )
 
-        if existing is not None:
+        if existing is None:
+            return self._repository.create(document)
 
-            if not existing.is_deleted:
-                raise ValueError(
-                    "A document with this file already exists."
-                )
-
-            existing.original_filename = document.original_filename
-            existing.stored_filename = document.stored_filename
-            existing.parsed_filename = document.parsed_filename
-            existing.mime_type = document.mime_type
-            existing.file_size = document.file_size
-            existing.page_count = 0
-            existing.character_count = 0
-            existing.chunk_count = 0
-            existing.embedding_model = ""
-            existing.embedding_dimension = 0
-            existing.status = DocumentStatus.UPLOADED
-            existing.indexed_at = None
-            existing.error_message = None
+        if existing.is_deleted:
+            self._reset_document(existing, document)
             existing.is_deleted = False
 
             return self._repository.update(existing)
 
-        return self._repository.create(document)
+        # Active duplicate for this user: the new upload replaces
+        # the old one in place (same document_id), so ingestion
+        # overwrites parsed/chunks files and indexing purges the
+        # stale vectors before re-indexing.
+        self._delete_stored_file(existing.stored_filename)
+        self._reset_document(existing, document)
+
+        return self._repository.update(existing)
+
+    @staticmethod
+    def _reset_document(
+        existing: Document,
+        document: Document,
+    ) -> None:
+
+        existing.original_filename = document.original_filename
+        existing.stored_filename = document.stored_filename
+        existing.parsed_filename = document.parsed_filename
+        existing.mime_type = document.mime_type
+        existing.file_size = document.file_size
+        existing.page_count = 0
+        existing.character_count = 0
+        existing.chunk_count = 0
+        existing.embedding_model = ""
+        existing.embedding_dimension = 0
+        existing.status = DocumentStatus.UPLOADED
+        existing.indexed_at = None
+        existing.error_message = None
+
+    @staticmethod
+    def _delete_stored_file(
+        stored_filename: str,
+    ) -> None:
+
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        try:
+            path = get_upload_path(stored_filename)
+
+            if path.exists():
+                path.unlink()
+        except Exception:
+            logger.exception(
+                "Failed to remove replaced stored file: %s",
+                stored_filename,
+            )
+
     def get_document(
         self,
         document_id: str,
@@ -60,9 +95,14 @@ class DocumentService:
             document_id
         )
 
-    def list_documents(self) -> list[Document]:
+    def list_documents(
+        self,
+        user_id: str | None = None,
+    ) -> list[Document]:
 
-        return self._repository.list_documents()
+        return self._repository.list_documents(
+            user_id=user_id,
+        )
 
     def mark_parsed(
         self,

@@ -68,6 +68,8 @@ class UploadService:
     async def process_upload(
         self,
         file: UploadFile,
+        *,
+        user_id: str | None = None,
     ) -> UploadResponse:
 
         await validate_file(file)
@@ -86,7 +88,30 @@ class UploadService:
                 mime_type=file.content_type or "application/octet-stream",
                 file_size=stored_file.path.stat().st_size,
                 file_hash=file_hash,
+                user_id=user_id,
             )
+
+        except ValueError as exc:
+
+            logger.warning(
+                "Rejected upload for %s: %s",
+                file.filename,
+                exc,
+            )
+
+            try:
+                if stored_file.path.exists():
+                    stored_file.path.unlink()
+            except Exception:
+                logger.exception(
+                    "Failed to remove stored file after rejected upload: %s",
+                    stored_file.path,
+                )
+
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(exc),
+            ) from exc
 
         except Exception as exc:
 
@@ -106,7 +131,7 @@ class UploadService:
 
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(exc),
+                detail="Failed to process document. Please try again or upload a different file.",
             ) from exc
         logger.info(
             "Uploaded and processed file: %s -> %s",
@@ -117,9 +142,8 @@ class UploadService:
         return UploadResponse(
             success=True,
             message="File uploaded successfully",
+            document_id=document.document_id,
             original_filename=file.filename,
-            stored_filename=stored_file.filename,
-            path=str(stored_file.path),
             pages=ingestion_result.parsed_document.page_count,
             characters=ingestion_result.parsed_document.characters,
             chunk_count=len(ingestion_result.chunks),

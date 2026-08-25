@@ -29,9 +29,11 @@ def create_test_session():
 
 def create_document(
     file_hash: str = "a" * 64,
+    user_id: str | None = None,
 ) -> Document:
 
     return Document(
+        user_id=user_id,
         original_filename="research-paper.pdf",
         stored_filename="abc123-paper.pdf",
         parsed_filename="abc123-paper.txt",
@@ -63,24 +65,90 @@ def test_create_document():
     db.close()
 
 
-def test_duplicate_document():
+def test_duplicate_document_is_replaced():
 
     db = create_test_session()
     service = DocumentService(db)
 
-    document = create_document()
+    original = service.create_document(
+        create_document()
+    )
 
-    service.create_document(document)
+    original.status = DocumentStatus.INDEXED
+    original.page_count = 10
 
     duplicate = create_document()
+    duplicate.stored_filename = "xyz789-paper.pdf"
 
-    try:
-        service.create_document(duplicate)
-        assert False
-    except ValueError as error:
-        assert str(error) == (
-            "A document with this file already exists."
-        )
+    result = service.create_document(duplicate)
+
+    assert result.id == original.id
+    assert result.document_id == (
+        original.document_id
+    )
+    assert result.stored_filename == (
+        "xyz789-paper.pdf"
+    )
+    assert result.status == (
+        DocumentStatus.UPLOADED
+    )
+    assert result.page_count == 0
+
+    documents = service.list_documents()
+
+    assert len(documents) == 1
+
+    db.close()
+
+
+def test_same_hash_different_users_coexist():
+
+    db = create_test_session()
+    service = DocumentService(db)
+
+    first = service.create_document(
+        create_document(user_id="1")
+    )
+
+    second = service.create_document(
+        create_document(user_id="2")
+    )
+
+    assert first.id != second.id
+    assert first.file_hash == second.file_hash
+
+    assert len(
+        service.list_documents(user_id="1")
+    ) == 1
+
+    assert len(
+        service.list_documents(user_id="2")
+    ) == 1
+
+    db.close()
+
+
+def test_duplicate_is_scoped_per_user():
+
+    db = create_test_session()
+    service = DocumentService(db)
+
+    original = service.create_document(
+        create_document(user_id="1")
+    )
+
+    duplicate = create_document(user_id="1")
+    duplicate.stored_filename = "xyz789-paper.pdf"
+
+    result = service.create_document(duplicate)
+
+    assert result.id == original.id
+
+    other = service.create_document(
+        create_document(user_id="2")
+    )
+
+    assert other.id != original.id
 
     db.close()
 

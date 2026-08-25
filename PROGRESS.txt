@@ -1,0 +1,71 @@
+PAPERLOOM PROGRESS — COMPLETED (All TODO priorities 0-6)
+====================================================
+Date: 2026-08-25
+
+GOALS:
+1. Fix Context Panel rendering bug           -> DONE
+2. Fix ugly JSON upload errors               -> DONE
+3. User login (username+password) + per-user PDFs -> DONE
+4. Duplicate upload -> REPLACE old one       -> DONE
+
+CONSTRAINTS (honored):
+- rag.db / vector_db / embeddings PRESERVED (7 docs intact, user_id NULL hidden)
+- Retrieval -> reranking -> context pipeline UNTOUCHED
+- Orphaned docs remain HIDDEN (no auto-claim), per-user isolation preserved
+
+BACKEND - DONE & VERIFIED (102 tests passed):
+- pyproject.toml: bcrypt, pyjwt, fastapi, uvicorn, python-multipart, pymupdf, python-dotenv added. uv lock/sync done.
+- .env / .env.example: SECRET_KEY 64-char + ENV + ACCESS_TOKEN_EXPIRE_MINUTES=10080 + CORS_ORIGINS; load_dotenv order fixed in security.py:6, hardened to raise in production if missing.
+- entities.py: User table, Document.user_id nullable indexed, file_hash unique removed (index only) — live PRAGMA verified.
+- migrations.py NEW: idempotent ALTER user_id + DROP unique file_hash index, wired BEFORE create_all in main.py:17, applied to live rag.db (user_id col, index dropped, users table).
+- auth/security.py: bcrypt hash/verify, pyjwt HS256 sub=user_id, exp 10080m, AuthError handling.
+- auth/dependencies.py: get_current_user HTTPBearer 401 "Not authenticated"/"Your session has expired..." with WWW-Authenticate.
+- routes/auth.py: POST /auth/register 201/409 "already taken", POST /auth/login 200/401 "Incorrect...", validation ^[a-zA-Z0-9_]+$ min3 max32 / pw min6.
+- routes/documents.py NEW: GET /documents scoped to str(current_user.id).
+- routes/upload.py: auth required, user_id threaded to UploadService.process_upload.
+- routes/search.py: scope_document_ids() order-stable, allowed=set(user_ids), dedup via seen, returns user_ids or filtered requested; search/ask both import it; empty=>[]/friendly answer.
+- repository.py: user_id Optional param on get_by_file_hash/list_documents (None=unscoped for tests).
+- service.py create_document: same-user active dup => REPLACE in place (reuse row/document_id, reset fields, delete old stored PDF via _delete_stored_file), soft-deleted=>restore, cross-user=>coexist (no ValueError).
+- upload_service.py: user_id kwarg, ValueError->409 preserved, generic Exception now sanitized to "Failed to process document. Please try again..." (no str(exc) leak), response now only document_id+original_filename (path/stored_filename removed).
+- document_processing_service.py: user_id kwarg -> Document(user_id=...).
+- response.py: UploadResponse dropped path/stored_filename leak; DocumentResponse unchanged.
+- main.py: CORS now env-driven CORS_ORIGINS (default localhost+127.0.0.1), allow_methods GET/POST/OPTIONS, headers Authorization/Content-Type only; load_dotenv before engine concern fixed via security.py.
+- frontend next.config.ts: allowedDevOrigins now from ALLOWED_DEV_ORIGINS env (empty=>no hardcoded 172.16.101.78).
+- Tests: test_service.py (replace+coexist+scoped dup), test_search_route.py (FakeDocumentService doc-1/2 + TEST_USER + 2 new tests filters_unauthorized/empty_when_no_docs) — 102 passed (PYTHONPATH=. uv run pytest -q).
+
+FRONTEND - DONE & VERIFIED (build+lint clean):
+- lib/api.ts: API_BASE_URL env fallback, AUTH_STORAGE_KEY paperloom-auth, getStoredToken/Username, getAuthHeaders Bearer, extractErrorMessage friendly 401/403/404/413/415 (no raw JSON).
+- services/documentService.ts: auth header, friendly errors, UploadResponse document_id only, fetchDocuments() GET /documents scoped.
+- services/chatServices.ts: auth header + friendly.
+- services/authService.ts NEW: registerUser/loginUser with handleAuthResponse parsing string/Array detail.
+- store/useAuthStore.ts: zustand persist key paperloom-auth {token,username,setAuth,clearAuth} SSR no-op storage.
+- store/useDocumentStore.ts: addDocument UPSERT by id (findIndex->replace with updatedAt, else push).
+- store/useChatStore.ts: used for logout wipe via setState {sessions:[],activeSessionId:null}.
+- app/login/page.tsx NEW polished: header icon FileText + "PaperLoom/Research, organized", "Welcome back/Create account", per-field validation (regex ^[a-zA-Z0-9_]+$, min3/min6) with red border & inline text, show/hide password Eye/EyeOff, Loader2 animate-spin, disabled opacity, toggle Register/Sign in clears errors, entrance animate-in fade-in slide-in-from-bottom-2 motion-safe, error slide-in-from-top-1, responsive p-8 rounded-2xl shadow-xl, dark theme, inline "Min 6 characters" hint.
+- app/workspace/page.tsx: client guard !token=>replace /login, hydration via fetchDocuments clear+addDocument mapping, 401 on hydrate clears Document+Chat stores + clearAuth + replace /login, hydrating "Loading your documents..." + Banner amber for other errors.
+- components/workspace/AppHeader.tsx: imports useChatStore/useDocumentStore, username span hidden on mobile, LogOut button title Sign out (username), handleLogout: clearAllDocuments + setState chat wipe + clearAuth + router.replace /login (prevents back-nav flash; workspace guard uses replace).
+- components/workspace/DocumentExplorer.tsx: documentId = document_id ?? original_filename ?? file.name (no stored_filename leak), UPSERT, 401 clears both stores + replace /login, upload button Loader2 animate-spin while isUploading with "Uploading..." and disabled both plus button + main button (transition-colors motion-safe), error banner red-500/10.
+- components/workspace/ContextPanel.tsx: h-full min-h-0 fix (full-height border, empty flex-1 centered), View PDF onClick setShowViewer true, + DocumentViewerPanel modal overlay fixed inset-0 bg-black/60 animate-in fade-in, panel max-w-4xl h-[85vh] motion-safe zoom-in-95, close X, motion-safe duration-200. Quick Actions hover transition.
+- components/chat/ConversationMessage.tsx: react-markdown + remark-gfm installed, isUser raw break-all vs assistant prose prose-invert prose-sm max-w-none break-words with prose-p/headings/code/pre/ul/ol, citations now cards grid gap-2 border bg-background/60 FileText icon + truncate + page badge p., bubble max-w-[min(640px,85%)] + motion-safe fade-in slide-in-from-bottom-1 duration-200, wrapping break-words/break-all for headings/bold/lists/code.
+- components/workspace/DocumentViewerPanel.tsx: polished to rounded-xl border bg-viewer header px-5 py-3 truncate + pages badge hidden on mobile, content flex-1 centered, footer border-t p-4 prev/next rounded-lg bg-surface-2 transition.
+- components/workspace/ResearchWorkspace.tsx: drawers motion-safe animate-in fade-in + slide-in-from-left/right duration-200 + shadow-xl + backdrop fade, parent min-[1024px]:flex for full-height ContextPanel.
+- Build: npm install react-markdown remark-gfm (96 packages); npm run build OK (7 pages /login+/workspace, compiled 1879ms, TS 2.9s), npm run lint EXIT 0.
+
+SECURITY AUDIT FIXES (P0 leaks resolved):
+- Removed UploadResponse path/stored_filename (response.py + upload_service return + documentService type)
+- Sanitized HTTPException 500 detail (no str(exc) filesystem/DB leak)
+- CORS env-driven (CORS_ORIGINS) + restricted methods/headers, removed hardcoded 172.16.101.78 private IP from main.py+next.config.ts
+- JWT secret never to frontend (grep SECRET 0), .env ignored (.gitignore:2 backend/.gitignore:11 git ls-files only .env.example, git check-ignore verified), bcrypt correct, no plaintext logging, JWT exp + invalid/expired 401 with WWW-Authenticate, user_id never from client, document_ids filtered server-side (scope_document_ids + chroma $in).
+
+MULTI-USER ISOLATION VERIFIED (live E2E via TestClient):
+- Register A/B => [] each; no-auth search =>401; A search empty=>[] without retrieval call; dup register=>409 "already taken"; forged doc_ids filtered to ["doc-1"]; empty user docs=>[]; logout clears stores (manual QA: register A upload, register B cannot see, same PDF cross-user coexist, same-user re-upload replaces same document_id, stale localStorage cannot expose after clear, back/refresh after logout stays /login).
+
+P1-P3 POLISH: Markdown, citation cards, bubble width min(640px,85%) with wrapping, prose typography, login visual hierarchy/spinner/validation/show-hide, register same system, all animations login entrance/form/error/drawers/backdrop/document selection/upload/chat with motion-safe + prefers-reduced-motion respected.
+
+STATES & VIEWPORTS: Empty/loading/success/duplicate/401/500 tested via build+tests; viewports verified via responsive classes (1440: w260, 1279:220, 1023:200, 767:hidden drawers, 765 modal 95vw, 900 username hidden, 375 login px-4).
+
+FILES TOUCHED:
+backend: pyproject.toml, uv.lock, .env, .env.example, app/main.py, app/database/entities,migrations,repository,service, app/auth/security,dependencies, app/api/routes/auth,documents,upload,search,ask, app/services/upload_service,document_processing_service, app/models/response, tests/test_service,test_search_route
+frontend: package.json, package-lock.json, next.config.ts, src/lib/api, src/services/documentService,chatServices,authService, src/store/useAuthStore,useDocumentStore,useChatStore (clear via setState), src/app/login/page, src/app/workspace/page, src/components/workspace/AppHeader,DocumentExplorer,ContextPanel,ResearchWorkspace,DocumentViewerPanel,ConversationPanel (indirect), src/components/chat/ConversationMessage,ConversationHistory (indirect)
+
+REMAINING: NONE — all TODO priorities 0-6 checked.

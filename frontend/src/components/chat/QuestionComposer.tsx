@@ -11,11 +11,7 @@ export default function QuestionComposer() {
   const [question, setQuestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const {
-    activeSessionId,
-    createSession,
-    addMessage,
-  } = useChatStore();
+  const { getOrCreateSessionForDocument, addMessage } = useChatStore();
 
   const {
     selectedDocumentId,
@@ -40,12 +36,12 @@ export default function QuestionComposer() {
     setIsLoading(true);
 
     try {
-      let sessionId = activeSessionId;
-
-      if (!sessionId) {
-        const session = createSession(document.name);
-        sessionId = session.id;
-      }
+      // One-document → one-chat-session (lazy): get or create the session for the selected document
+      const session = getOrCreateSessionForDocument(
+        selectedDocumentId!,
+        document.name,
+      );
+      const sessionId = session.id;
 
       const userMessage: ChatMessage = {
         id: `message-${Date.now()}`,
@@ -83,12 +79,12 @@ export default function QuestionComposer() {
     } catch (error) {
       console.error('Question failed:', error);
 
-      let sessionId = activeSessionId;
-
-      if (!sessionId) {
-        const session = createSession(document.name);
-        sessionId = session.id;
-      }
+      // Ensure even error messages land in the correct document's session
+      const session = getOrCreateSessionForDocument(
+        selectedDocumentId!,
+        document.name,
+      );
+      const sessionId = session.id;
 
       addMessage(sessionId, {
         id: `message-${Date.now()}-error`,

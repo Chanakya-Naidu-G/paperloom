@@ -1,14 +1,28 @@
-const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+import {
+  API_BASE_URL,
+  extractErrorMessage,
+  getAuthHeaders,
+} from '@/lib/api';
 
 export interface UploadResponse {
   success: boolean;
   message: string;
+  document_id?: string;
   original_filename?: string;
-  stored_filename?: string;
-  path?: string;
   pages?: number;
   characters?: number;
   chunk_count?: number;
+}
+
+export interface DocumentListItem {
+  document_id: string;
+  original_filename: string;
+  file_size: number;
+  page_count: number;
+  character_count: number;
+  chunk_count: number;
+  status: string;
+  uploaded_at: string;
 }
 
 export async function uploadDocument(
@@ -19,14 +33,27 @@ export async function uploadDocument(
 
   const response = await fetch(`${API_BASE_URL}/upload`, {
     method: 'POST',
+    headers: getAuthHeaders(),
     body: formData,
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-
     throw new Error(
-      `Upload failed (${response.status}): ${errorText}`,
+      await extractErrorMessage(response, 'Failed to upload document.'),
+    );
+  }
+
+  return response.json();
+}
+
+export async function fetchDocuments(): Promise<DocumentListItem[]> {
+  const response = await fetch(`${API_BASE_URL}/documents`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await extractErrorMessage(response, 'Failed to load your documents.'),
     );
   }
 

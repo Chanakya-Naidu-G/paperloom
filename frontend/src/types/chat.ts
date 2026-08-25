@@ -8,6 +8,7 @@ export interface ChatMessage {
 
 export interface ChatSession {
   id: string;
+  documentId: string;
   title: string;
   messages: ChatMessage[];
   createdAt: Date;

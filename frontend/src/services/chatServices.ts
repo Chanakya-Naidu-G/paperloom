@@ -1,22 +1,29 @@
 import { AskRequest, AskResponse } from '@/types/chat';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+import {
+  API_BASE_URL,
+  extractErrorMessage,
+  getAuthHeaders,
+} from '@/lib/api';
 
 export async function askQuestion(
   request: AskRequest,
 ): Promise<AskResponse> {
-  const response = await fetch(`${API_URL}/ask`, {
+  const response = await fetch(`${API_BASE_URL}/ask`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(request),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || 'Failed to get answer.');
+    throw new Error(
+      await extractErrorMessage(
+        response,
+        'Failed to get an answer. Please try again.',
+      ),
+    );
   }
 
   return response.json();

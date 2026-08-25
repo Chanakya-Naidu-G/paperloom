@@ -1,10 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { FileText, Link2, PenLine, X } from 'lucide-react';
+import { FileText, Loader2, PenLine, X } from 'lucide-react';
 import { useChatStore } from '@/store/useChatStore';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { formatDate, formatFileSize } from '@/lib/utils';
+import { askQuestion } from '@/services/chatServices';
+import DocumentViewerPanel from './DocumentViewerPanel';
 
 interface ContextPanelProps {
   onClose: () => void;
@@ -18,8 +20,13 @@ interface RelevantSection {
 
 const VISIBLE_SECTIONS = 3;
 
+const SUMMARY_PROMPT =
+  'Provide a concise but comprehensive summary of this paper, covering its purpose, methodology, key concepts, important findings, and conclusions.';
+
 export default function ContextPanel({ onClose }: ContextPanelProps) {
   const [showAllSections, setShowAllSections] = useState(false);
+  const [showViewer, setShowViewer] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const selectedDocument = useDocumentStore((state) =>
     state.documents.find(
@@ -70,8 +77,60 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
     ? relevantSections
     : relevantSections.slice(0, VISIBLE_SECTIONS);
 
+  async function handleSummarize() {
+    if (!selectedDocument || isSummarizing) return;
+
+    const documentId = selectedDocument.id;
+    const title = selectedDocument.name;
+    setIsSummarizing(true);
+
+    const chatStore = useChatStore.getState();
+    const session = chatStore.getOrCreateSessionForDocument(documentId, title);
+    const sessionId = session.id;
+
+    // Insert user message as the spec expects: "Summarize this paper."
+    chatStore.addMessage(sessionId, {
+      id: `msg-${Date.now()}-user`,
+      role: 'user',
+      content: 'Summarize this paper.',
+      timestamp: new Date(),
+    });
+
+    try {
+      const response = await askQuestion({
+        query: SUMMARY_PROMPT,
+        top_k: 5,
+        document_ids: [documentId],
+      });
+
+      chatStore.addMessage(sessionId, {
+        id: `msg-${Date.now()}-assistant`,
+        role: 'assistant',
+        content: response.answer,
+        timestamp: new Date(),
+        citations: response.sources.map((source, index) => ({
+          id: `${source.chunk_id}-${index}`,
+          source: source.section || source.document_id,
+          page: source.page_start,
+          text: `Pages ${source.page_start}-${source.page_end}`,
+        })),
+      });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Failed to summarize. Please try again.';
+      chatStore.addMessage(sessionId, {
+        id: `msg-${Date.now()}-error`,
+        role: 'assistant',
+        content: `Sorry, I couldn't summarize that. ${msg}`,
+        timestamp: new Date(),
+      });
+    } finally {
+      setIsSummarizing(false);
+    }
+  }
+
   return (
-    <aside className="flex w-[380px] shrink-0 flex-col overflow-y-auto border-l border-border bg-viewer">
+    <aside className="flex h-full min-h-0 w-[380px] shrink-0 flex-col overflow-y-auto border-l border-border bg-viewer">
       {/* Panel header */}
       <div className="flex items-center justify-between border-b border-border px-6 py-4 max-[1023px]:px-4">
         <h2 className="text-base font-semibold text-foreground">
@@ -140,7 +199,8 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
             <div className="mt-4 space-y-3">
               <button
                 type="button"
-                className="flex h-10 w-full items-center gap-3 rounded-lg border border-border px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-2"
+                onClick={() => setShowViewer(true)}
+                className="flex h-10 w-full items-center gap-3 rounded-lg border border-border px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-2 motion-safe:transition-colors"
               >
                 <FileText className="h-4 w-4 text-muted-foreground" />
                 View PDF
@@ -148,18 +208,16 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
 
               <button
                 type="button"
-                className="flex h-10 w-full items-center gap-3 rounded-lg border border-border px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-2"
+                onClick={handleSummarize}
+                disabled={isSummarizing}
+                className="flex h-10 w-full items-center gap-3 rounded-lg border border-border px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60 motion-safe:transition-colors"
               >
-                <Link2 className="h-4 w-4 text-muted-foreground" />
-                Extract References
-              </button>
-
-              <button
-                type="button"
-                className="flex h-10 w-full items-center gap-3 rounded-lg border border-border px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-2"
-              >
-                <PenLine className="h-4 w-4 text-muted-foreground" />
-                Summarize Paper
+                {isSummarizing ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                ) : (
+                  <PenLine className="h-4 w-4 text-muted-foreground" />
+                )}
+                {isSummarizing ? 'Summarizing...' : 'Summarize Paper'}
               </button>
             </div>
           </section>
@@ -212,6 +270,20 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
             )}
           </section>
         </>
+      )}
+
+      {/* PDF Viewer Overlay — document-specific, close independent from page count */}
+      {showViewer && selectedDocument && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
+          <div
+            className="absolute inset-0"
+            onClick={() => setShowViewer(false)}
+            aria-hidden
+          />
+          <div className="relative flex h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200 max-[765px]:h-[90vh] max-[765px]:max-w-[95vw]">
+            <DocumentViewerPanel onClose={() => setShowViewer(false)} />
+          </div>
+        </div>
       )}
     </aside>
   );

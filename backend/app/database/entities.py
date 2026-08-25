@@ -22,6 +22,35 @@ class DocumentStatus(str, Enum):
     FAILED = "FAILED"
 
 
+class User(Base):
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    username: Mapped[str] = mapped_column(
+        String(64),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+
+    hashed_password: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+
 class Document(Base):
 
     __tablename__ = "documents"
@@ -38,6 +67,12 @@ class Document(Base):
         index=True,
         nullable=False,
         default=lambda: str(uuid4()),
+    )
+
+    user_id: Mapped[str | None] = mapped_column(
+        String(36),
+        index=True,
+        nullable=True,
     )
 
     original_filename: Mapped[str] = mapped_column(
@@ -67,7 +102,6 @@ class Document(Base):
 
     file_hash: Mapped[str] = mapped_column(
         String(64),
-        unique=True,
         index=True,
         nullable=False,
     )

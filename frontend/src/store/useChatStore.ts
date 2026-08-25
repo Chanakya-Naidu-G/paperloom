@@ -6,10 +6,13 @@ interface ChatStore {
   activeSessionId: string | null;
   
   // Session management
-  createSession: (title: string) => ChatSession;
+  createSession: (title: string, documentId: string) => ChatSession;
   deleteSession: (sessionId: string) => void;
-  setActiveSession: (sessionId: string) => void;
+  setActiveSession: (sessionId: string | null) => void;
   getActiveSession: () => ChatSession | null;
+  getSessionForDocument: (documentId: string) => ChatSession | null;
+  getOrCreateSessionForDocument: (documentId: string, title: string) => ChatSession;
+  deleteSessionsForDocument: (documentId: string) => void;
   
   // Message management
   addMessage: (sessionId: string, message: ChatMessage) => void;
@@ -25,9 +28,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   sessions: [],
   activeSessionId: null,
 
-  createSession: (title: string) => {
+  createSession: (title: string, documentId: string) => {
     const newSession: ChatSession = {
-      id: `session-${Date.now()}`,
+      id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      documentId,
       title,
       messages: [],
       createdAt: new Date(),
@@ -48,7 +52,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }));
   },
 
-  setActiveSession: (sessionId: string) => {
+  setActiveSession: (sessionId: string | null) => {
     set({ activeSessionId: sessionId });
   },
 
@@ -57,6 +61,45 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     return (
       state.sessions.find((s) => s.id === state.activeSessionId) || null
     );
+  },
+
+  getSessionForDocument: (documentId: string) => {
+    const state = get();
+    return state.sessions.find((s) => s.documentId === documentId) || null;
+  },
+
+  getOrCreateSessionForDocument: (documentId: string, title: string) => {
+    const existing = get().sessions.find((s) => s.documentId === documentId);
+    if (existing) {
+      if (get().activeSessionId !== existing.id) {
+        set({ activeSessionId: existing.id });
+      }
+      return existing;
+    }
+    const newSession: ChatSession = {
+      id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      documentId,
+      title,
+      messages: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    set((state) => ({
+      sessions: [...state.sessions, newSession],
+      activeSessionId: newSession.id,
+    }));
+    return newSession;
+  },
+
+  deleteSessionsForDocument: (documentId: string) => {
+    set((state) => {
+      const remaining = state.sessions.filter((s) => s.documentId !== documentId);
+      const activeStillExists = remaining.some((s) => s.id === state.activeSessionId);
+      return {
+        sessions: remaining,
+        activeSessionId: activeStillExists ? state.activeSessionId : null,
+      };
+    });
   },
 
   addMessage: (sessionId: string, message: ChatMessage) => {

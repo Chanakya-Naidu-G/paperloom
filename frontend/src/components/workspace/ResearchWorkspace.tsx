@@ -36,7 +36,7 @@ export default function ResearchWorkspace() {
         </main>
 
         {/* Context */}
-        <aside className="hidden shrink-0 min-[1024px]:block">
+        <aside className="hidden shrink-0 min-[1024px]:flex">
           {isContextOpen ? (
             <ContextPanel
               onClose={() => setIsContextOpen(false)}
@@ -59,13 +59,13 @@ export default function ResearchWorkspace() {
 
       {/* Mobile documents drawer */}
       {isDocsDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex">
+        <div className="fixed inset-0 z-50 flex motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
           <div
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-black/60 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200"
             onClick={() => setIsDocsDrawerOpen(false)}
           />
 
-          <div className="relative flex h-full w-[260px] max-w-[85vw] flex-col bg-explorer">
+          <div className="relative flex h-full w-[260px] max-w-[85vw] flex-col bg-explorer shadow-xl motion-safe:animate-in motion-safe:slide-in-from-left motion-safe:duration-200">
             <DocumentExplorer />
           </div>
         </div>
@@ -73,13 +73,13 @@ export default function ResearchWorkspace() {
 
       {/* Mobile context drawer */}
       {isContextDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-50 flex justify-end motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
           <div
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-black/60 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200"
             onClick={() => setIsContextDrawerOpen(false)}
           />
 
-          <div className="relative flex h-full w-[380px] max-w-[85vw] flex-col overflow-hidden bg-viewer">
+          <div className="relative flex h-full w-[380px] max-w-[85vw] flex-col overflow-hidden bg-viewer shadow-xl motion-safe:animate-in motion-safe:slide-in-from-right motion-safe:duration-200">
             <ContextPanel
               onClose={() => setIsContextDrawerOpen(false)}
             />

@@ -1,12 +1,17 @@
 'use client';
 
 import React, { ChangeEvent, useRef, useState } from 'react';
-import { FileText, Plus } from 'lucide-react';
+import { FileText, Loader2, Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { uploadDocument } from '@/services/documentService';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useChatStore } from '@/store/useChatStore';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { formatFileSize } from '@/lib/utils';
 
 export default function DocumentExplorer() {
+  const router = useRouter();
+  const clearAuth = useAuthStore((s) => s.clearAuth);
   const {
     documents,
     selectedDocumentId,
@@ -20,6 +25,18 @@ export default function DocumentExplorer() {
 
   function openFilePicker() {
     fileInputRef.current?.click();
+  }
+
+  function handleSelectDocument(documentId: string) {
+    setSelectedDocument(documentId);
+    // One-document → one-chat-session (lazy): activate existing session if any, otherwise clear active so empty state shows until first question
+    const chatState = useChatStore.getState();
+    const existing = chatState.getSessionForDocument(documentId);
+    if (existing) {
+      chatState.setActiveSession(existing.id);
+    } else {
+      chatState.setActiveSession(null);
+    }
   }
   async function handleFileSelect(
     event: ChangeEvent<HTMLInputElement>,
@@ -40,8 +57,9 @@ export default function DocumentExplorer() {
         throw new Error(response.message);
       }
 
+      // Prefer the canonical backend document_id so re-uploads replace in place
       const documentId =
-        response.stored_filename ?? response.original_filename ?? file.name;
+        response.document_id ?? response.original_filename ?? file.name;
 
       addDocument({
         id: documentId,
@@ -55,13 +73,23 @@ export default function DocumentExplorer() {
         chunkCount: response.chunk_count,
       });
 
-      setSelectedDocument(documentId);
+      handleSelectDocument(documentId);
     } catch (uploadError) {
-      setError(
+      const message =
         uploadError instanceof Error
           ? uploadError.message
-          : 'Failed to upload document.',
-      );
+          : 'Failed to upload document.';
+
+      // Auth expired during upload -> bounce to login (replace prevents back-nav to protected state)
+      if (message.includes('sign in again')) {
+        useDocumentStore.getState().clearAllDocuments();
+        useChatStore.setState({ sessions: [], activeSessionId: null });
+        clearAuth();
+        router.replace('/login');
+        return;
+      }
+
+      setError(message);
     } finally {
       setIsUploading(false);
 
@@ -104,10 +132,19 @@ export default function DocumentExplorer() {
           type="button"
           onClick={openFilePicker}
           disabled={isUploading}
-          className="flex h-10 max-[1023px]:h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[13px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+          className="flex h-10 max-[1023px]:h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[13px] font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60 motion-safe:transition-colors"
         >
-          <Plus className="h-4 w-4" />
-          {isUploading ? 'Uploading...' : 'Upload PDF'}
+          {isUploading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4" />
+              Upload PDF
+            </>
+          )}
         </button>
       </div>
 
@@ -131,7 +168,7 @@ export default function DocumentExplorer() {
               <button
                 key={doc.id}
                 type="button"
-                onClick={() => setSelectedDocument(doc.id)}
+                onClick={() => handleSelectDocument(doc.id)}
                 className={`relative flex h-[68px] max-[1023px]:h-[64px] w-full items-center gap-3 overflow-hidden rounded-lg border px-3 text-left transition-colors ${
                   isSelected
                     ? 'border-border bg-surface-2'

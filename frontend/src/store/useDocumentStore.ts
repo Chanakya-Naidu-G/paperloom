@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Document } from '@/types/document';
+import { useChatStore } from '@/store/useChatStore';
 
 interface DocumentStore {
   documents: Document[];
@@ -28,9 +29,17 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   selectedDocumentId: null,
 
   addDocument: (document: Document) => {
-    set((state) => ({
-      documents: [...state.documents, document],
-    }));
+    set((state) => {
+      const existingIndex = state.documents.findIndex(
+        (d) => d.id === document.id,
+      );
+      if (existingIndex !== -1) {
+        const next = [...state.documents];
+        next[existingIndex] = { ...next[existingIndex], ...document, updatedAt: new Date() };
+        return { documents: next };
+      }
+      return { documents: [...state.documents, document] };
+    });
   },
 
   deleteDocument: (documentId: string) => {
@@ -39,6 +48,10 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       selectedDocumentId:
         state.selectedDocumentId === documentId ? null : state.selectedDocumentId,
     }));
+    // Also remove the document's chat session to avoid orphaned sessions
+    try {
+      useChatStore.getState().deleteSessionsForDocument(documentId);
+    } catch {}
   },
 
   updateDocument: (documentId: string, updates: Partial<Document>) => {

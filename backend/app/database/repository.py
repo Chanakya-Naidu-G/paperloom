@@ -44,11 +44,17 @@ class DocumentRepository:
         self,
         file_hash: str,
         include_deleted: bool = False,
+        user_id: str | None = None,
     ) -> Document | None:
 
         statement = select(Document).where(
             Document.file_hash == file_hash
         )
+
+        if user_id is not None:
+            statement = statement.where(
+                Document.user_id == user_id
+            )
 
         if not include_deleted:
             statement = statement.where(
@@ -60,9 +66,15 @@ class DocumentRepository:
     def list_documents(
         self,
         include_deleted: bool = False,
+        user_id: str | None = None,
     ) -> list[Document]:
 
         statement = select(Document)
+
+        if user_id is not None:
+            statement = statement.where(
+                Document.user_id == user_id
+            )
 
         if not include_deleted:
             statement = statement.where(
