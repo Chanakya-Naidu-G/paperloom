@@ -21,7 +21,6 @@ export default function DocumentExplorer() {
   function openFilePicker() {
     fileInputRef.current?.click();
   }
-
   async function handleFileSelect(
     event: ChangeEvent<HTMLInputElement>,
   ) {
