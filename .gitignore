@@ -45,5 +45,9 @@ Thumbs.db
 
 # Logs
 *.log
-logs/backend/data/*.db
+logs/
+
+# Local databases (backend/data/ covers rag.db; these catch strays elsewhere)
+*.db
+*.sqlite*
 backend/data/
