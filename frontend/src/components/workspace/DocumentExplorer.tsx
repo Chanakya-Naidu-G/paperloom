@@ -1,13 +1,16 @@
 'use client';
 
 import React, { ChangeEvent, useRef, useState } from 'react';
-import { FileText, Loader2, Plus } from 'lucide-react';
+import { motion } from 'motion/react';
+import { FileText, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { uploadDocument } from '@/services/documentService';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore } from '@/store/useChatStore';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { formatFileSize } from '@/lib/utils';
+import { AnimatedReveal } from '@/components/ui/AnimatedReveal';
+import { JumpingDots } from '@/components/ui/JumpingDots';
 
 export default function DocumentExplorer() {
   const router = useRouter();
@@ -115,28 +118,30 @@ export default function DocumentExplorer() {
           Documents
         </h2>
 
-        <button
+        <motion.button
           type="button"
           onClick={openFilePicker}
           disabled={isUploading}
           aria-label="Upload document"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground disabled:opacity-50"
+          whileTap={isUploading ? undefined : { scale: 0.85 }}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         >
           <Plus className="h-4 w-4" />
-        </button>
+        </motion.button>
       </div>
 
       {/* Upload button: W 228 · H 40 · #2563EB · r8 */}
       <div className="px-4">
-        <button
+        <motion.button
           type="button"
           onClick={openFilePicker}
           disabled={isUploading}
-          className="flex h-10 max-[1023px]:h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[13px] font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60 motion-safe:transition-colors"
+          whileTap={isUploading ? undefined : { scale: 0.98 }}
+          className="flex h-10 max-[1023px]:h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[13px] font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60 motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         >
           {isUploading ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <JumpingDots />
               Uploading...
             </>
           ) : (
@@ -145,14 +150,14 @@ export default function DocumentExplorer() {
               Upload PDF
             </>
           )}
-        </button>
+        </motion.button>
       </div>
 
-      {error && (
-        <div className="mx-4 mt-3 rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-xs text-red-400">
+      <AnimatedReveal open={!!error} className="mx-4 mt-3">
+        <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-xs text-red-400">
           {error}
         </div>
-      )}
+      </AnimatedReveal>
 
       {/* Document cards: W 228 · H 68 · #18181B · r8 · indicator 3×68 #2563EB */}
       <div className="mt-4 flex-1 space-y-3 overflow-y-auto px-4 pb-4">
@@ -165,18 +170,23 @@ export default function DocumentExplorer() {
             const isSelected = doc.id === selectedDocumentId;
 
             return (
-              <button
+              <motion.button
                 key={doc.id}
                 type="button"
                 onClick={() => handleSelectDocument(doc.id)}
-                className={`relative flex h-[68px] max-[1023px]:h-[64px] w-full items-center gap-3 overflow-hidden rounded-lg border px-3 text-left transition-colors ${
+                whileTap={{ scale: 0.99 }}
+                className={`relative flex h-[68px] max-[1023px]:h-[64px] w-full items-center gap-3 overflow-hidden rounded-lg border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
                   isSelected
                     ? 'border-border bg-surface-2'
                     : 'border-border bg-surface-2/40 hover:bg-surface-2/70'
                 }`}
               >
                 {isSelected && (
-                  <span className="absolute left-0 top-0 h-full w-[3px] rounded-[2px] bg-primary" />
+                  <motion.span
+                    layoutId="doc-selected-indicator"
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                    className="absolute left-0 top-0 h-full w-[3px] rounded-[2px] bg-primary"
+                  />
                 )}
 
                 <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -192,7 +202,7 @@ export default function DocumentExplorer() {
                     {formatFileSize(doc.size)}
                   </span>
                 </span>
-              </button>
+              </motion.button>
             );
           })
         )}

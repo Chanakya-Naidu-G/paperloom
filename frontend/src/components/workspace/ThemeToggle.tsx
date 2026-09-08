@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { motion } from 'motion/react';
 import { Moon, Sun } from 'lucide-react';
+import { MorphIcon } from '@/components/ui/MorphIcon';
 
 export default function ThemeToggle() {
   const [isDark, setIsDark] = useState<boolean | null>(null);
@@ -45,18 +47,21 @@ export default function ThemeToggle() {
   }
 
   return (
-    <button
+    <motion.button
       type="button"
       onClick={toggleTheme}
-      className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+      whileTap={{ scale: 0.85 }}
+      className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       aria-label="Toggle theme"
     >
-      {isDark ? (
-        <Moon className="h-5 w-5" />
-      ) : (
-        <Sun className="h-5 w-5" />
-      )}
-    </button>
+      <MorphIcon iconKey={isDark ? 'dark' : 'light'} layoutId="theme-toggle-morph">
+        {isDark ? (
+          <Moon className="h-5 w-5" />
+        ) : (
+          <Sun className="h-5 w-5" />
+        )}
+      </MorphIcon>
+    </motion.button>
   );
 }

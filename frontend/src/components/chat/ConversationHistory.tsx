@@ -1,13 +1,16 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FileText, Loader2, Upload } from "lucide-react";
+import { motion } from "motion/react";
+import { FileText, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useChatStore } from "../../store/useChatStore";
 import { useDocumentStore } from "../../store/useDocumentStore";
 import { useAuthStore } from "../../store/useAuthStore";
 import { uploadDocument } from "@/services/documentService";
 import { ConversationMessage } from "./ConversationMessage";
+import { AnimatedReveal } from "@/components/ui/AnimatedReveal";
+import { JumpingDots } from "@/components/ui/JumpingDots";
 
 export function ConversationHistory() {
   const router = useRouter();
@@ -95,15 +98,16 @@ export function ConversationHistory() {
             <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
               Your intelligent research companion. Upload a PDF to start a private, grounded conversation with your documents.
             </p>
-            <button
+            <motion.button
               type="button"
               onClick={openFilePicker}
               disabled={isUploading}
-              className="mt-6 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-60 motion-safe:transition-colors"
+              whileTap={isUploading ? undefined : { scale: 0.97 }}
+              className="mt-6 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-60 motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               {isUploading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <JumpingDots />
                   Uploading...
                 </>
               ) : (
@@ -112,12 +116,12 @@ export function ConversationHistory() {
                   Upload your first PDF
                 </>
               )}
-            </button>
-            {error && (
-              <div className="mt-4 w-full rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+            </motion.button>
+            <AnimatedReveal open={!!error} className="mt-4 w-full">
+              <div className="w-full rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-400">
                 {error}
               </div>
-            )}
+            </AnimatedReveal>
             <p className="mt-4 text-xs text-faint">PDF only • 50MB max • Per-user isolated</p>
           </div>
         </div>

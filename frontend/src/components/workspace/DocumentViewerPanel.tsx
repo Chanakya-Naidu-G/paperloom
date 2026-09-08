@@ -3,9 +3,11 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
 import React, { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { API_BASE_URL, getAuthHeaders } from '@/lib/api';
+import { JumpingDots } from '@/components/ui/JumpingDots';
 
 interface DocumentViewerPanelProps {
   onClose?: () => void;
@@ -114,14 +116,15 @@ export default function DocumentViewerPanel({ onClose }: DocumentViewerPanelProp
         )}
 
         {onClose && (
-          <button
+          <motion.button
             type="button"
             onClick={onClose}
             aria-label="Close viewer"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+            whileTap={{ scale: 0.85 }}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             <X className="h-5 w-5" />
-          </button>
+          </motion.button>
         )}
       </div>
 
@@ -133,7 +136,7 @@ export default function DocumentViewerPanel({ onClose }: DocumentViewerPanelProp
           </div>
         ) : loading ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-sm text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <JumpingDots />
             Loading PDF...
           </div>
         ) : error ? (
@@ -142,12 +145,23 @@ export default function DocumentViewerPanel({ onClose }: DocumentViewerPanelProp
             <p className="text-xs text-muted-foreground">Try selecting the document again.</p>
           </div>
         ) : iframeSrc ? (
-          <iframe
-            key={`${selectedDoc.id}-${blobUrl}`}
-            src={iframeSrc}
-            title={selectedDoc.name}
-            className="h-full w-full border-0 bg-white"
-          />
+          /* Page changes blur-fade like the UserButton contentAnimations */
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={`${selectedDoc.id}-${currentPage}`}
+              initial={{ opacity: 0, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, filter: 'blur(8px)' }}
+              transition={{ duration: 0.18 }}
+              className="h-full w-full flex-1"
+            >
+              <iframe
+                src={iframeSrc}
+                title={selectedDoc.name}
+                className="h-full w-full border-0 bg-white"
+              />
+            </motion.div>
+          </AnimatePresence>
         ) : (
           <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
             PDF preview will appear here.
@@ -158,29 +172,31 @@ export default function DocumentViewerPanel({ onClose }: DocumentViewerPanelProp
       {/* Footer: Previous / 1 / 30 / Next — always visible when doc selected */}
       {selectedDoc && (
         <div className="flex h-12 shrink-0 items-center justify-between border-t border-border bg-surface px-4">
-          <button
+          <motion.button
             type="button"
             onClick={handlePrev}
             disabled={!canPrev || loading || !!error || !blobUrl}
-            className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+            whileTap={!canPrev || loading || !!error || !blobUrl ? undefined : { scale: 0.95 }}
+            className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             <ChevronLeft className="h-4 w-4" />
             Previous
-          </button>
+          </motion.button>
 
           <span className="text-sm tabular-nums text-muted-foreground">
             {currentPage} / {totalPages || '?'}
           </span>
 
-          <button
+          <motion.button
             type="button"
             onClick={handleNext}
             disabled={!canNext || loading || !!error || !blobUrl}
-            className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+            whileTap={!canNext || loading || !!error || !blobUrl ? undefined : { scale: 0.95 }}
+            className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             Next
             <ChevronRight className="h-4 w-4" />
-          </button>
+          </motion.button>
         </div>
       )}
     </div>

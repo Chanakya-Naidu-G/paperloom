@@ -7,6 +7,8 @@ import { fetchDocuments } from '@/services/documentService';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore } from '@/store/useChatStore';
 import { useDocumentStore } from '@/store/useDocumentStore';
+import { AnimatedReveal } from '@/components/ui/AnimatedReveal';
+import { JumpingDots } from '@/components/ui/JumpingDots';
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -76,7 +78,8 @@ export default function WorkspacePage() {
 
   if (hydrating) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+      <div className="flex h-screen items-center justify-center gap-3 bg-background text-sm text-muted-foreground">
+        <JumpingDots />
         Loading your documents...
       </div>
     );
@@ -84,11 +87,11 @@ export default function WorkspacePage() {
 
   return (
     <>
-      {hydrationError && (
+      <AnimatedReveal open={!!hydrationError}>
         <div className="border-b border-amber-500/40 bg-amber-500/10 px-4 py-2 text-center text-xs text-amber-600 dark:text-amber-400">
           {hydrationError} — your workspace is still usable.
         </div>
-      )}
+      </AnimatedReveal>
       <ResearchWorkspace />
     </>
   );

@@ -1,11 +1,13 @@
 'use client';
 
-import { LogOut, Menu, PanelRight } from 'lucide-react';
+import { Menu, PanelRight } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore } from '@/store/useChatStore';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import ThemeToggle from './ThemeToggle';
+import { UserMenu } from './UserMenu';
 
 interface AppHeaderProps {
   onOpenDocuments?: () => void;
@@ -32,15 +34,16 @@ export default function AppHeader({
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-6 max-[1023px]:px-4 max-[767px]:px-3">
       <div className="flex min-w-0 items-center gap-1">
         {/* Mobile only: documents drawer */}
-        <button
+        <motion.button
           type="button"
           onClick={() => onOpenDocuments?.()}
           aria-label="Open documents"
           title="Documents"
-          className="hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground max-[767px]:flex"
+          whileTap={{ scale: 0.85 }}
+          className="hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 max-[767px]:flex"
         >
           <Menu className="h-5 w-5" />
-        </button>
+        </motion.button>
 
         <span className="truncate text-base font-semibold text-foreground">
           PaperLoom
@@ -49,15 +52,16 @@ export default function AppHeader({
 
       <div className="flex shrink-0 items-center gap-1">
         {/* Mobile only: context drawer */}
-        <button
+        <motion.button
           type="button"
           onClick={() => onOpenContext?.()}
           aria-label="Open context panel"
           title="Context"
-          className="hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground max-[767px]:flex"
+          whileTap={{ scale: 0.85 }}
+          className="hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 max-[767px]:flex"
         >
           <PanelRight className="h-5 w-5" />
-        </button>
+        </motion.button>
 
         <ThemeToggle />
 
@@ -67,15 +71,7 @@ export default function AppHeader({
           </span>
         )}
 
-        <button
-          type="button"
-          aria-label="Log out"
-          title={username ? `Sign out (${username})` : 'Sign out'}
-          onClick={handleLogout}
-          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
-        >
-          <LogOut className="h-5 w-5" />
-        </button>
+        <UserMenu username={username} onSignOut={handleLogout} />
       </div>
     </header>
   );

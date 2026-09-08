@@ -1,11 +1,13 @@
 'use client';
 
 import React, { FormEvent, useState } from 'react';
+import { motion } from 'motion/react';
 import { ArrowUp } from 'lucide-react';
 import { useChatStore } from '@/store/useChatStore';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { askQuestion } from '@/services/chatServices';
 import { ChatMessage } from '@/types/chat';
+import { MorphIcon } from '@/components/ui/MorphIcon';
 
 export default function QuestionComposer() {
   const [question, setQuestion] = useState('');
@@ -119,14 +121,25 @@ export default function QuestionComposer() {
           className="h-8 min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-faint disabled:opacity-50"
         />
 
-        <button
+        <motion.button
           type="submit"
           disabled={!question.trim() || isLoading}
           aria-label="Send question"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+          whileTap={!question.trim() || isLoading ? undefined : { scale: 0.85 }}
+          animate={{ scale: question.trim() && !isLoading ? 1 : 0.95 }}
+          transition={{ type: 'spring', bounce: 0.3, duration: 0.3 }}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-[opacity,background-color] hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         >
-          <ArrowUp className="h-4 w-4" />
-        </button>
+          <MorphIcon iconKey={isLoading ? 'sending' : 'idle'} layoutId="composer-send-morph">
+            {isLoading ? (
+              <span className="flex h-4 w-4 items-center justify-center">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground" />
+              </span>
+            ) : (
+              <ArrowUp className="h-4 w-4" />
+            )}
+          </MorphIcon>
+        </motion.button>
       </div>
     </form>
   );

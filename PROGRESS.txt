@@ -69,3 +69,19 @@ backend: pyproject.toml, uv.lock, .env, .env.example, app/main.py, app/database/
 frontend: package.json, package-lock.json, next.config.ts, src/lib/api, src/services/documentService,chatServices,authService, src/store/useAuthStore,useDocumentStore,useChatStore (clear via setState), src/app/login/page, src/app/workspace/page, src/components/workspace/AppHeader,DocumentExplorer,ContextPanel,ResearchWorkspace,DocumentViewerPanel,ConversationPanel (indirect), src/components/chat/ConversationMessage,ConversationHistory (indirect)
 
 REMAINING: NONE — all TODO priorities 0-6 checked.
+
+PRIORITY 7 — THEME & CLIENT-SIDE SECURITY (2026-08-25, see PAPERLOOM_TODO.md P7):
+- Login ThemeToggle mounted (login/page), theme persists login<->workspace via shared localStorage key + inline pre-hydration script in layout.tsx (no FOUC/mismatch).
+- Client secret audit: NEXT_PUBLIC_* only NEXT_PUBLIC_API_URL; 0 GEMINI/AIza/SECRET/HF_TOKEN hits in frontend/src; all AI calls via backend; storage only paperloom-auth+theme; .next bundles clean.
+
+MOTION ANIMATION PASS (2026-09-08, motion/react installed):
+- NEW ui/AnimatedReveal.tsx (Template 1 ConditionalField: AnimatePresence + height-auto measured reveal + contentAnimations blur), ui/MorphIcon.tsx (Template 2 UserButton: shared-layoutId spring morph + blur icon crossfade), ui/JumpingDots.tsx (Template 3: stagger mirror-jump dots, currentColor), ui/MotionProvider.tsx (MotionConfig reducedMotion=user, wired in layout.tsx).
+- NEW workspace/UserMenu.tsx: avatar button morphs to open menu via shared layoutId (container+avatar), blur-fade content, outside-click/Escape close; replaces icon-only logout in AppHeader (username chip retained).
+- Template 1 applied: login field/server errors, explorer upload error, history empty-state error, workspace amber banner (all real exit transitions now).
+- Template 2 applied: ThemeToggle Sun/Moon morph, login Eye/EyeOff morph, composer ArrowUp/spinner morph, login heading login<->register blur swap, doc-card selection indicator layoutId slide, viewer page-change blur fade, mobile drawers spring slide + modal zoom/blur with AnimatePresence exits.
+- Template 3 applied: login submit, explorer upload x2, history empty upload, summarize, viewer PDF load, workspace hydration (Loader2 fully replaced).
+- All buttons: whileTap press scale (0.85 icons / 0.97-0.99 blocks) + focus-visible rings; landing CTA hover scale + arrow nudge (CSS, page stays server component).
+- VERIFIED: npm install motion, npm run lint EXIT 0, npm run build OK (4 routes, TS clean).
+
+FILES TOUCHED (motion pass):
+frontend: package.json, package-lock.json, src/app/layout, src/app/page (CTA), src/app/login/page, src/app/workspace/page, src/components/ui/AnimatedReveal,MorphIcon,JumpingDots,MotionProvider (NEW), src/components/workspace/UserMenu (NEW), AppHeader,ThemeToggle,DocumentExplorer,ContextPanel,DocumentViewerPanel,ResearchWorkspace, src/components/chat/QuestionComposer,ConversationHistory

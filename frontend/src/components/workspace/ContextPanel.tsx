@@ -1,12 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { FileText, Loader2, PenLine, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { FileText, PenLine, X } from 'lucide-react';
 import { useChatStore } from '@/store/useChatStore';
 import { useDocumentStore } from '@/store/useDocumentStore';
 import { formatDate, formatFileSize } from '@/lib/utils';
 import { askQuestion } from '@/services/chatServices';
 import DocumentViewerPanel from './DocumentViewerPanel';
+import { JumpingDots } from '@/components/ui/JumpingDots';
 
 interface ContextPanelProps {
   onClose: () => void;
@@ -137,14 +139,15 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
           Context
         </h2>
 
-        <button
+        <motion.button
           type="button"
           onClick={onClose}
           aria-label="Close context panel"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+          whileTap={{ scale: 0.85 }}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         >
           <X className="h-5 w-5" />
-        </button>
+        </motion.button>
       </div>
 
       {!selectedDocument ? (
@@ -197,28 +200,30 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
             </h3>
 
             <div className="mt-4 space-y-3">
-              <button
+              <motion.button
                 type="button"
                 onClick={() => setShowViewer(true)}
-                className="flex h-10 w-full items-center gap-3 rounded-lg border border-border px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-2 motion-safe:transition-colors"
+                whileTap={{ scale: 0.98 }}
+                className="flex h-10 w-full items-center gap-3 rounded-lg border border-border px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-2 motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               >
                 <FileText className="h-4 w-4 text-muted-foreground" />
                 View PDF
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
                 type="button"
                 onClick={handleSummarize}
                 disabled={isSummarizing}
-                className="flex h-10 w-full items-center gap-3 rounded-lg border border-border px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60 motion-safe:transition-colors"
+                whileTap={isSummarizing ? undefined : { scale: 0.98 }}
+                className="flex h-10 w-full items-center gap-3 rounded-lg border border-border px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60 motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               >
                 {isSummarizing ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <JumpingDots />
                 ) : (
                   <PenLine className="h-4 w-4 text-muted-foreground" />
                 )}
                 {isSummarizing ? 'Summarizing...' : 'Summarize Paper'}
-              </button>
+              </motion.button>
             </div>
           </section>
 
@@ -254,17 +259,18 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
                 </div>
 
                 {relevantSections.length > VISIBLE_SECTIONS && (
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() =>
                       setShowAllSections((prev) => !prev)
                     }
-                    className="mt-4 flex h-10 w-full items-center justify-center rounded-lg border border-border text-[13px] font-medium text-foreground transition-colors hover:bg-surface-2"
+                    whileTap={{ scale: 0.98 }}
+                    className="mt-4 flex h-10 w-full items-center justify-center rounded-lg border border-border text-[13px] font-medium text-foreground transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                   >
                     {showAllSections
                       ? 'Show Fewer Sections'
                       : 'Show More Sections'}
-                  </button>
+                  </motion.button>
                 )}
               </>
             )}
@@ -272,19 +278,34 @@ export default function ContextPanel({ onClose }: ContextPanelProps) {
         </>
       )}
 
-      {/* PDF Viewer Overlay — document-specific, close independent from page count */}
-      {showViewer && selectedDocument && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
-          <div
-            className="absolute inset-0"
-            onClick={() => setShowViewer(false)}
-            aria-hidden
-          />
-          <div className="relative flex h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200 max-[765px]:h-[90vh] max-[765px]:max-w-[95vw]">
-            <DocumentViewerPanel onClose={() => setShowViewer(false)} />
-          </div>
-        </div>
-      )}
+      {/* PDF Viewer Overlay — document-specific, close independent from page count.
+          AnimatePresence gives a real exit transition (CSS animate-in cannot). */}
+      <AnimatePresence>
+        {showViewer && selectedDocument && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          >
+            <div
+              className="absolute inset-0"
+              onClick={() => setShowViewer(false)}
+              aria-hidden
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, scale: 0.95, filter: 'blur(8px)' }}
+              transition={{ duration: 0.2, delay: 0.05 }}
+              className="relative flex h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl max-[765px]:h-[90vh] max-[765px]:max-w-[95vw]"
+            >
+              <DocumentViewerPanel onClose={() => setShowViewer(false)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </aside>
   );
 }

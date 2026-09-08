@@ -119,6 +119,15 @@
   - [x] Verified backend does not leak secrets: `SECRET_KEY`/`GEMINI_API_KEY` only in `backend/app/auth/security.py:11`/`generation/client.py:13` server-side, never returned in `auth.py`/`documents.py`/`search.py`/`ask.py` responses (only `access_token` JWT); error detail sanitized (`upload_service` generic 500, no path leak).
   - [x] Manual DevTools checklist documented: Network → no Gemini/HF key, Storage → Local `paperloom-auth`+`theme` only, Session `empty`, Cookies `none`, Debugger global search `AIza|GEMINI|SECRET_KEY|HF_TOKEN` → 0 in `frontend/src`, Source Maps → only frontend source (no secrets).
 
+## Priority 8 — Motion animations (2026-09-08)
+
+- [x] Install `motion` (motion/react) + global `MotionProvider` (`reducedMotion="user"`)
+- [x] Template 1 ConditionalField → `AnimatedReveal` (height-auto reveal): login field/server errors, explorer/history upload errors, workspace amber banner
+- [x] Template 2 UserButton → `MorphIcon` (layoutId morph + blur) + `UserMenu` (avatar↔menu morph): ThemeToggle, Eye/EyeOff, composer send, login heading swap, doc selection indicator, viewer page fade, drawers/modal with AnimatePresence exits
+- [x] Template 3 Jumping dots → `JumpingDots`: login submit, explorer uploads, history empty upload, summarize, viewer load, workspace hydration
+- [x] Press micro-interactions (`whileTap`) + focus-visible rings on all buttons; landing CTA hover/arrow
+- [x] `npm run build` + `npm run lint` clean
+
 ## Constraints / invariants
 
 - Preserve `rag.db`, `vector_db`, and existing embeddings.

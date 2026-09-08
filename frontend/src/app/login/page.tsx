@@ -2,10 +2,14 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, FileText, Loader2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { Eye, EyeOff, FileText } from 'lucide-react';
 import { loginUser, registerUser } from '@/services/authService';
 import { useAuthStore } from '@/store/useAuthStore';
 import ThemeToggle from '@/components/workspace/ThemeToggle';
+import { AnimatedReveal, contentAnimations } from '@/components/ui/AnimatedReveal';
+import { MorphIcon } from '@/components/ui/MorphIcon';
+import { JumpingDots } from '@/components/ui/JumpingDots';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -65,12 +69,16 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <h2 className="mt-6 text-[15px] font-semibold text-foreground">
-            {mode === 'login' ? 'Welcome back' : 'Create account'}
-          </h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            {mode === 'login' ? 'Sign in to continue to your workspace.' : 'Join PaperLoom to chat with your papers.'}
-          </p>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={mode} {...contentAnimations}>
+              <h2 className="mt-6 text-[15px] font-semibold text-foreground">
+                {mode === 'login' ? 'Welcome back' : 'Create account'}
+              </h2>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                {mode === 'login' ? 'Sign in to continue to your workspace.' : 'Join PaperLoom to chat with your papers.'}
+              </p>
+            </motion.div>
+          </AnimatePresence>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
@@ -83,10 +91,14 @@ export default function LoginPage() {
                 aria-invalid={!!fieldErrors.username}
                 className={`w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 ${fieldErrors.username ? 'border-red-500/60 focus:ring-red-500/30' : 'border-border'}`}
               />
-              {fieldErrors.username && <p className="mt-1.5 text-xs text-red-400 motion-safe:animate-in motion-safe:fade-in">{fieldErrors.username}</p>}
+              <AnimatedReveal open={!!fieldErrors.username} className="text-xs">
+                <p className="mt-1.5 text-xs text-red-400">{fieldErrors.username}</p>
+              </AnimatedReveal>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-foreground">Password</label>
+              {/* ConditionalField pattern: container keeps layout stable while
+                  the hint/error below swaps with a measured-height reveal */}
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -97,36 +109,41 @@ export default function LoginPage() {
                   aria-invalid={!!fieldErrors.password}
                   className={`w-full rounded-xl border bg-background px-3.5 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 ${fieldErrors.password ? 'border-red-500/60 focus:ring-red-500/30' : 'border-border'}`}
                 />
-                <button
+                <motion.button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+                  whileTap={{ scale: 0.85 }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                  <MorphIcon iconKey={showPassword ? 'hide' : 'show'} layoutId="login-eye-morph">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </MorphIcon>
+                </motion.button>
               </div>
-              {fieldErrors.password ? (
-                <p className="mt-1.5 text-xs text-red-400 motion-safe:animate-in motion-safe:fade-in">{fieldErrors.password}</p>
-              ) : (
+              <AnimatedReveal open={!!fieldErrors.password} className="text-xs">
+                <p className="mt-1.5 text-xs text-red-400">{fieldErrors.password}</p>
+              </AnimatedReveal>
+              {!fieldErrors.password && (
                 <p className="mt-1.5 text-xs text-faint">Min 6 characters</p>
               )}
             </div>
 
-            {error && (
-              <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2.5 text-xs leading-relaxed text-red-400 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1">
+            <AnimatedReveal open={!!error}>
+              <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2.5 text-xs leading-relaxed text-red-400">
                 {error}
               </div>
-            )}
+            </AnimatedReveal>
 
-            <button
+            <motion.button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              whileTap={loading ? undefined : { scale: 0.98 }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {loading && <JumpingDots />}
               {loading ? (mode === 'login' ? 'Signing in...' : 'Creating account...') : mode === 'login' ? 'Sign in' : 'Create account'}
-            </button>
+            </motion.button>
           </form>
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
@@ -138,7 +155,7 @@ export default function LoginPage() {
                 setError(null);
                 setFieldErrors({});
               }}
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-primary underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               {mode === 'login' ? 'Register' : 'Sign in'}
             </button>

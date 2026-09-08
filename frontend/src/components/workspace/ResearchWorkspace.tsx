@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { PanelRight } from 'lucide-react';
 import AppHeader from './AppHeader';
 import DocumentExplorer from './DocumentExplorer';
@@ -43,49 +44,78 @@ export default function ResearchWorkspace() {
             />
           ) : (
             <div className="flex w-12 items-start justify-center border-l border-border bg-viewer pt-4">
-              <button
+              <motion.button
                 type="button"
                 onClick={() => setIsContextOpen(true)}
                 aria-label="Open context panel"
                 title="Open context panel"
-                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+                whileTap={{ scale: 0.85 }}
+                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               >
                 <PanelRight className="h-5 w-5" />
-              </button>
+              </motion.button>
             </div>
           )}
         </aside>
       </div>
 
-      {/* Mobile documents drawer */}
-      {isDocsDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
-          <div
-            className="absolute inset-0 bg-black/60 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200"
-            onClick={() => setIsDocsDrawerOpen(false)}
-          />
+      {/* Mobile documents drawer — AnimatePresence so close animates out */}
+      <AnimatePresence>
+        {isDocsDrawerOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex"
+          >
+            <div
+              className="absolute inset-0 bg-black/60"
+              onClick={() => setIsDocsDrawerOpen(false)}
+            />
 
-          <div className="relative flex h-full w-[260px] max-w-[85vw] flex-col bg-explorer shadow-xl motion-safe:animate-in motion-safe:slide-in-from-left motion-safe:duration-200">
-            <DocumentExplorer />
-          </div>
-        </div>
-      )}
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
+              className="relative flex h-full w-[260px] max-w-[85vw] flex-col bg-explorer shadow-xl"
+            >
+              <DocumentExplorer />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mobile context drawer */}
-      {isContextDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
-          <div
-            className="absolute inset-0 bg-black/60 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200"
-            onClick={() => setIsContextDrawerOpen(false)}
-          />
-
-          <div className="relative flex h-full w-[380px] max-w-[85vw] flex-col overflow-hidden bg-viewer shadow-xl motion-safe:animate-in motion-safe:slide-in-from-right motion-safe:duration-200">
-            <ContextPanel
-              onClose={() => setIsContextDrawerOpen(false)}
+      <AnimatePresence>
+        {isContextDrawerOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex justify-end"
+          >
+            <div
+              className="absolute inset-0 bg-black/60"
+              onClick={() => setIsContextDrawerOpen(false)}
             />
-          </div>
-        </div>
-      )}
+
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
+              className="relative flex h-full w-[380px] max-w-[85vw] flex-col overflow-hidden bg-viewer shadow-xl"
+            >
+              <ContextPanel
+                onClose={() => setIsContextDrawerOpen(false)}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

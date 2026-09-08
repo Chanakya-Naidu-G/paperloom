@@ -23,10 +23,10 @@ export default function HomePage() {
 
         <Link
           href="/login"
-          className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-8 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 motion-safe:transition-colors"
+          className="group mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-8 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] motion-safe:transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         >
           Open Research Workspace
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
 
         <p className="mt-6 text-xs text-faint">PDF only • 50 MB max • Secure by design</p>
