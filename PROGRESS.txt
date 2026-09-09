@@ -13,7 +13,7 @@ CONSTRAINTS (honored):
 - Retrieval -> reranking -> context pipeline UNTOUCHED
 - Orphaned docs remain HIDDEN (no auto-claim), per-user isolation preserved
 
-BACKEND - DONE & VERIFIED (102 tests passed):
+BACKEND - DONE & VERIFIED (103 tests passed):
 - pyproject.toml: bcrypt, pyjwt, fastapi, uvicorn, python-multipart, pymupdf, python-dotenv added. uv lock/sync done.
 - .env / .env.example: SECRET_KEY 64-char + ENV + ACCESS_TOKEN_EXPIRE_MINUTES=10080 + CORS_ORIGINS; load_dotenv order fixed in security.py:6, hardened to raise in production if missing.
 - entities.py: User table, Document.user_id nullable indexed, file_hash unique removed (index only) — live PRAGMA verified.

@@ -86,7 +86,7 @@ npm run lint && npm run build   # frontend/ → exit 0, 4 routes
 
 Backend (`backend/.env`, see `.env.example`): `ENV`, `SECRET_KEY` (required when
 `ENV=production`), `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`,
-`CORS_ORIGINS`, `DATABASE_URL` (default `sqlite:///./data/rag.db`), `VECTOR_DB_PATH`.
+`CORS_ORIGINS`, `DATABASE_URL` (default `sqlite:///./data/rag.db`), `VECTOR_DB_PATH`, `VECTOR_DB_COLLECTION`.
 Frontend: `NEXT_PUBLIC_API_URL`. Secrets are git-ignored and never reach the browser
 bundle (only the JWT in `localStorage:paperloom-auth`).
 
