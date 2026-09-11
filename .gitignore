@@ -50,3 +50,4 @@ logs/
 # Local databases
 *.db
 *.sqlite*
+paperloom-backend.pem
