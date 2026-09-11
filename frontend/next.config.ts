@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/v1/:path*",
-        destination: "http://13.207.50.207/api/v1/:path*",
+        destination: "https://paperloom-api.myftp.biz/api/v1/:path*",
       },
     ];
   },
